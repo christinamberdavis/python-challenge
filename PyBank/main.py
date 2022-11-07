@@ -15,14 +15,11 @@ import csv
 #set csvpath so that the csv can be found
 csvpath = os.path.join('Resources', 'budget_data.csv')
 
-#QC: open the file and read it into the terminal
+#open the csv
 with open(csvpath) as csvfile:
     budget_data_csv = csv.reader(csvfile, delimiter=',')
-    #print(budget_data_csv)
-    #output: <_csv.reader object at 0x7fde0de89890>
 
-
-    # Read the header row first (skip this step if there is no header)
+    # Read the header row first
     csv_header = next(budget_data_csv)
 
     #create lists of the columns
@@ -36,7 +33,6 @@ with open(csvpath) as csvfile:
         #add p&l data to p_l and cast the list values as int
         p_l.append(int(csv_rows[1]))
 
-
 #------------------------------------------------------------------------------------------------------------
 #The total number of months included in the dataset
 #------------------------------------------------------------------------------------------------------------
@@ -47,7 +43,6 @@ with open(csvpath) as csvfile:
 #reference: https://www.w3schools.com/python/python_howto_remove_duplicates.asp 
 #reference retrieve 11/06/2022
     months = list(dict.fromkeys(months))
-    #print(months)
 
     #count total number of months in the list
     total_months = len(months)
@@ -55,51 +50,70 @@ with open(csvpath) as csvfile:
 #------------------------------------------------------------------------------------------------------------
 #The net total amount of "Profit/Losses" over the entire period
 #------------------------------------------------------------------------------------------------------------
-#sum up all values in profit_loss
-    #for row in budget_data_csv: 
+    #sum up all values in profit_loss
     profit_loss = int(sum(p_l))
 
-    #convert profit_loss to string
-    #profit_string = str(profit_loss)
+#------------------------------------------------------------------------------------------------------------
+#Set up variables and do math for Average Change, Greatest Increase, and Greatest Decrease
+#------------------------------------------------------------------------------------------------------------
+ 
+ #cerate variables
+    #difference month over month
+    diffs = []
+    #track the p_l index we are on
+    pl_index = 0
+    #set increase to 0
+    biggest_increase = 0
+    #set decrease to 0
+    biggest_decrease = 0
+    #set date indices to 0
+    date_inc_index = 0
+    date_dec_index = 0
+    #calculate a value so that we don't try to calculate the last row - 1
+    run = len(p_l) - 2
+    
+    #loop through each value in p_l list
+    for value in p_l:
+        #if we are not on the last value of p_l, then
+        if pl_index <= run:
+            #calculate the month over month difference
+            diff = p_l[pl_index + 1] - p_l[pl_index]
+            #add the diff to the diffs list
+            diffs.append(int(diff))
+            #set values for biggest increase 
+            if (diff > biggest_increase):
+                biggest_increase = diff
+                #track the index of the biggest increase value
+                date_inc_index = pl_index + 1
+            #set values for biggest decrease
+            if (diff < biggest_decrease):
+                biggest_decrease = diff
+                #track the index of the biggest decrease value
+                date_dec_index = pl_index + 1
+            #increment the index tracker for the next set of p_l values
+            pl_index = pl_index + 1
+
+        #if on the last row
+        elif pl_index > run:
+
+#------------------------------------------------------------------------------------------------------------
+#The greatest increase in profits (date and amount) over the entire period
+#------------------------------------------------------------------------------------------------------------
+
+            biggest_increase = max(diffs)
 
 #------------------------------------------------------------------------------------------------------------
 #The changes in "Profit/Losses" over the entire period, and then the average of those changes
 #------------------------------------------------------------------------------------------------------------
-    differences = []
-    pl_index = 0
-    run = len(p_l) - 2
-    #print(run)
 
-    for value in p_l:
-        #difference = p_l(pl_index) - p_l(pl_index + 1)
-        if pl_index <= run:
-            difference = p_l[pl_index] - p_l[pl_index + 1]
-            #print(difference)
-            differences.append(int(difference))
-            pl_index = pl_index + 1
+            average_change = sum(diffs) / len(diffs)
 
-        elif pl_index > run:
-            average_change = sum(differences) / len(differences)
 
 #------------------------------------------------------------------------------------------------------------
 #The greatest increase in profits (date and amount) over the entire period
 #------------------------------------------------------------------------------------------------------------
-    increases = []
-    pl_index = 0
-    
-    for value in p_l:
-        if pl_index <= run:
-            increase = p_l[pl_index + 1] - p_l[pl_index]
-            increases.append(int(increase))
-            pl_index = pl_index + 1
 
-        elif pl_index > run:
-            biggest_increase = max(increases)
-
-#------------------------------------------------------------------------------------------------------------
-#The greatest increase in profits (date and amount) over the entire period
-#------------------------------------------------------------------------------------------------------------
-            biggest_decrease = min(increases)
+            biggest_decrease = min(diffs)
 
 #------------------------------------------------------------------------------------------------------------
 #Print out all the data
@@ -107,20 +121,5 @@ with open(csvpath) as csvfile:
     print("Total Months: " + str(total_months))
     print("Total: ${:,.2f}".format(profit_loss))
     print("Average Change: ${:,.2f}".format(average_change))
-    print("Greatest Increase in Profits: ${:,.2f}".format(biggest_increase))
-    print("Greatest Decrease in Profits: ${:,.2f}".format(biggest_decrease))
-
-
-
-    #print("CSV Header: {}".format(csv_header))
-    #output: CSV Header: ['Date', 'Profit/Losses']
-
-    #Create a list of lists of rows
-    #csv_rows = list(budget_data_csv)
-    #output a row to see what the data looks like
-    #print(csv_rows)
-    #output: CSV Rows: ['Feb-10', '-354534']
-
-    #figure out the total number of rows
-    #total_rows = int(len(csv_rows))
-    #print(total_rows)
+    print("Greatest Increase in Profits: " + months[date_inc_index] + " ${:,.2f}".format(biggest_increase))
+    print("Greatest Decrease in Profits: " + months[date_dec_index] + " ${:,.2f}".format(biggest_decrease))
