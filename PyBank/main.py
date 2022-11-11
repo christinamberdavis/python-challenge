@@ -116,10 +116,28 @@ with open(csvpath) as csvfile:
             biggest_decrease = min(diffs)
 
 #------------------------------------------------------------------------------------------------------------
-#Print out all the data
+#Print out all the data to terminal
 #------------------------------------------------------------------------------------------------------------
+    print("Financial Analysis")
+    print("----------------------------")
     print("Total Months: " + str(total_months))
     print("Total: ${:,.2f}".format(profit_loss))
     print("Average Change: ${:,.2f}".format(average_change))
     print("Greatest Increase in Profits: " + months[date_inc_index] + " ${:,.2f}".format(biggest_increase))
     print("Greatest Decrease in Profits: " + months[date_dec_index] + " ${:,.2f}".format(biggest_decrease))
+
+
+#------------------------------------------------------------------------------------------------------------
+#Print out all the data to text file
+#------------------------------------------------------------------------------------------------------------
+lines = ["Financial Analysis",
+         "----------------------------",
+         "Total Months: " + str(total_months),
+         "Total: ${:,.2f}".format(profit_loss),
+         "Average Change: ${:,.2f}".format(average_change),
+         "Greatest Increase in Profits: " + months[date_inc_index] + " ${:,.2f}".format(biggest_increase),
+         "Greatest Decrease in Profits: " + months[date_dec_index] + " ${:,.2f}".format(biggest_decrease)]
+with open('financial_analysis.txt', 'w') as f:
+    for line in lines:
+        f.write(line)
+        f.write('\n')
