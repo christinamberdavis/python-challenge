@@ -1,67 +1,59 @@
-#In this Challenge, you are tasked with helping a small, rural town modernize its vote-counting process.
-
-#You will be given a set of poll data called election_data.csv. The dataset is composed of three columns: "Voter ID", "County", and "Candidate". Your task is to create a Python script that analyzes the votes and calculates each of the following values:
-
-
-
-
-
-
-#The winner of the election based on popular vote
-
 #import modules for os and reading csv
 import os
-import pandas as pd
+import csv
 
 #set csvpath so that the csv can be found
 csvpath = os.path.join('Resources', 'election_data.csv')
+#lists to store data
+candidateslist = []
 
-#open the csv
 with open(csvpath) as csvfile:
-    #election_data_csv = csv.reader(csvfile, delimiter=',')
 
-    #create a dataframe
-    df = pd.read_csv(csvpath)
-    #print(df.head())
-    # ['Ballot ID', 'County', 'Candidate']
-    #1323913  Jefferson  Charles Casper Stockham
+    # CSV reader specifies delimiter and variable that holds contents
+    csvreader = csv.reader(csvfile, delimiter=',')
 
-    #---------------------------------------
-    #The total number of votes cast is the same as the number of unique ballot IDs
-    #---------------------------------------
-    number_votes = len(pd.unique(df['Ballot ID']))
-    
+    # Read the header row first (skip this step if there is no header)
+    csv_header = next(csvreader)
     #---------------------------------------
     #A complete list of candidates who received votes. Create a variable that includes a list of unique candidates
-    #---------------------------------------
-    candidates = df["Candidate"].unique()
-    #this returns a list of candidates
-    #print(candidates)
- 
-    #---------------------------------------
-    #The percentage of votes each candidate won
-    #The total number of votes each candidate won
-    #---------------------------------------
-    #get the % of votes for each candidate
-    percentage = df["Candidate"].value_counts()/number_votes * 100
-    #get the total votes for each candidate
-    votes_each = df["Candidate"].value_counts()
-
-    # Place all of the data found into a summary DataFrame
-    summary_df = pd.DataFrame({
-                              "Percentage of Votes": percentage,
-                              "Total Votes": votes_each,
-                              })
+    #---------------------------------------    
+    for row in csvreader:
+        candidateslist.append(row[2])
+        #print(row)
+    #print('------------------------')
+    #print(candidateslist)
     
+    #---------------------------------------
+    #The total number of votes cast is the same as the length of the candidates list (that is, the same as the number of rows in the csv)
+    #---------------------------------------
+    total_votes = len(candidateslist)
+    #print(total_votes)
 
-    #format the columns in the summary_df: % as float, total votes as # with commas
-    summary_df.loc[:, "Total Votes"] = summary_df["Total Votes"].map('{:,d}'.format)
-    summary_df.loc[:, "Percentage of Votes"] = summary_df["Percentage of Votes"].map('{:.3f}'.format)
+    #convert list to dict to dedupe. Candidate names are Keys. 
+    #you can't make the nested dictionary here because it treats it as ONE OBJECT that is being shared by all candidates
+    candidates_votes = dict.fromkeys(candidateslist, 0)
+    #print (candidates) = {'Charles Casper Stockham': 0, 'Diana DeGette': 0, 'Raymon Anthony Doane': 0}
 
-    #find the number of votes for the winner
-    winner_votes = summary_df["Percentage of Votes"].max()
-   
-
+    #loop through the keys in candidateslist
+    for candidate in candidateslist:
+        #the first time we find the candidate in the list, check to see if it's key value in the dictionary is 0. 
+        if candidates_votes[candidate] == 0:
+            #If yes, create a dictionary for each candidate to hold the vote count and percentage of votes calculation
+            candidates_votes[candidate] = {'vote_count':0, 'percentage':0.0 }
+        #If no, incremente the candidates's vote count
+        candidates_votes[candidate]['vote_count'] +=1
+    
+    winner_votes = 0
+    #calculate the percentage for each candidate
+    for candidate in candidates_votes:
+        candidates_votes[candidate]['percentage'] = (candidates_votes[candidate]['vote_count']/total_votes)*100
+        #if candidates's vote_count > winner_vote, set winner_vote = vote_count 
+        if candidates_votes[candidate]['vote_count'] > winner_votes:
+            winner_votes = candidates_votes[candidate]['vote_count']
+            #because we know who the candidate with the biggest count is right now, we know who the candidate is
+            #so we set the winner to the key we are on (the candidate)
+            winner = candidate
+    #print(winner + " " + str(winner_votes)) = Diana DeGette 272892
 
 
     #---------------------------------------
@@ -70,17 +62,29 @@ with open(csvpath) as csvfile:
     print("-------------------------")
     print("Election Results")
     print("-------------------------")
-    print("Total Votes: " + str(number_votes))
+    print("Total Votes: " + str(total_votes))
     print("-------------------------")
-    print(summary_df.to_string(index=True, header=True))
+    for candidate in candidates_votes:
+        print(candidate + ": {:,.3f}".format(candidates_votes[candidate]['percentage']) + "% (" + str(candidates_votes[candidate]['vote_count'])+ ")")
     print("-------------------------")
-    print("Winner: " + winner_votes )
+    print("Winner: " + winner )
     print("-------------------------")
-    print(summary_df[winner_votes])
 
-    #---------------------------------------
-    #Output to text file
-    #---------------------------------------
+#------------------------------------------------------------------------------------------------------------
+#Print out all the data to text file
+#------------------------------------------------------------------------------------------------------------
+lines = [("-------------------------\n"),
+         ("Election Results\n"),
+         ("-------------------------\n"),
+         ("Total Votes: " + str(total_votes)) + "\n",
+         ("-------------------------\n")]
+for candidate in candidates_votes:
+    lines.append(candidate + ": {:,.3f}".format(candidates_votes[candidate]['percentage']) + "% (" + str(candidates_votes[candidate]['vote_count'])+ ")" + "\n")
 
-    # Export file as a CSV, without the Pandas index, but with the header
-    #election_output.to_csv("Output/fileOne.csv", index=False, header=True)
+lines.append(("-------------------------\n"))
+lines.append(("Winner: " + winner) + "\n")
+lines.append(("-------------------------\n"))
+
+with open('election_results.txt', 'w') as f:
+    f.writelines(lines)
+f.close
